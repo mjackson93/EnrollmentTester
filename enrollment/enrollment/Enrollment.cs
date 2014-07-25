@@ -13,20 +13,19 @@ using OpenQA.Selenium.Support.UI;
 
 namespace enrollment
 {
-	public abstract class Eurydice
-	{
-		internal static IWebDriver driver1 = new FirefoxDriver(); // TODO change into
-		internal static Actions action = new Actions(driver1);
+	public abstract class Eurydice {
+		internal static IWebDriver driver = new FirefoxDriver(); // TODO change into
+		internal static Actions action = new Actions(driver);
 		// method
 		internal static int IMPLICIT_WAIT_SECONDS = 10;
 
 
 		public static void setup(String dnp) {
-			driver1.Navigate().GoToUrl("https://" + dnp + ".orpheusdev.net/Users/Account/LogOn");
+			driver.Navigate().GoToUrl("https://" + dnp + ".orpheusdev.net/Users/Account/LogOn");
 		}
 
 		public static IWebDriver getDriver() {
-			return driver1;
+			return driver;
 		}
 
 		public static Actions getAction() {
