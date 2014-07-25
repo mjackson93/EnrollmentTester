@@ -15,7 +15,7 @@ namespace enrollment
 {
 
 	[TestFixture()]
-	public class Program : Confirmation
+	public class Program : Eurydice2
 	{
 		[Test()]
 		public void TestCase() {
@@ -30,6 +30,27 @@ namespace enrollment
 			runScreen3 ();
 			runScreen4 ();
 		}
+
+
+
+        /* UnenrollUser
+         * ------------
+         * Goes to the QA tools site and un-enrolls the given user by username via the Kill Bill tool.
+         */
+        [TestCase("test0123")]
+        public void UnenrollUser(String username)
+        {
+            IWebDriver driver = new FirefoxDriver();
+            Actions action = new Actions(driver);
+            driver.Navigate().GoToUrl("https://qatools.orpheusdev.net/");
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
+            wait.Until(d => d.FindElement(By.XPath("//select [contains(@id, 'cnnId')]")));
+            driver.FindElement(By.XPath("//select [contains(@id, 'cnnId')]")).Click();
+            for (int i = 0; i < 3; i++) action.SendKeys(Keys.Down).Perform();
+            action.SendKeys(Keys.Enter).Perform();
+            driver.FindElement(By.XPath("//input [contains(@name, 'param')]")).SendKeys(username);
+            driver.FindElement(By.XPath("//button [contains(@id, 'button3')]")).Click();
+        }
 
 		public static void Main(){}
 
