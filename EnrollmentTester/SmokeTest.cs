@@ -18,21 +18,22 @@ namespace EnrollmentTester
     [TestFixture()]
     public class SmokeTest
     {
+        //public static IWebDriver driver = new FirefoxDriver();
         public static IWebDriver driver = new FirefoxDriver();
         public static Actions action = new Actions(driver);
-        public static int WAIT_UNTIL_TIME = 30;
+        public static int WAIT_UNTIL_TIME = 20;
 
 
 
         /* A smoke test for enrolling a user, logging in with the user, and then unenrolling the user. */
-        [TestCase(17818, "123qweasdqwe123")]
+        [TestCase(17900, "123qweasdqwe123")] //Previously 17818
         public void Test(int number, String pass)
         {
             String username = "0" + number;
-            UnenrollUser(username);
+            UnenrollUser(username, false);
             EnrollUser(number, pass);
             site_login(username, "", pass);
-            UnenrollUser(username);
+            UnenrollUser(username, true);
         }
 
 
@@ -42,7 +43,7 @@ namespace EnrollmentTester
          * ------------
          * Goes to the QA tools site and un-enrolls the given user by username via the Kill Bill tool.
          */
-        public void UnenrollUser(String username)
+        public void UnenrollUser(String username, bool verifyUnenrolled)
         {
             driver.Navigate().GoToUrl("https://qatools.orpheusdev.net/");
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME));
@@ -58,6 +59,7 @@ namespace EnrollmentTester
                 alert.Accept();
             }
             catch { }
+            //Console.WriteLine(driver.FindElement(By.XPath("//*[contains(text(), 'Ac')]/text()[preceding-sibling::br]")).GetAttribute("text"));
             System.Threading.Thread.Sleep(1000); //TODO: remove this
         }
 
@@ -144,7 +146,7 @@ namespace EnrollmentTester
         internal void part1(String ssn, String accountnumber, String month, int day, int year)
         {
             driver.FindElement(By.LinkText("Register")).Click();
-            new WebDriverWait(driver, TimeSpan.FromSeconds(10)).Until(ExpectedConditions.ElementExists((By.Id("Ssn"))));
+            new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME)).Until(ExpectedConditions.ElementExists((By.Id("Ssn"))));
             driver.FindElement(By.Id("Ssn")).SendKeys(ssn);
             driver.FindElement(By.Id("AccountNumber")).SendKeys(accountnumber);
             driver.FindElement(By.ClassName("k-input")).Click();
@@ -152,9 +154,13 @@ namespace EnrollmentTester
             action.SendKeys(Keys.Enter).Perform();
             driver.FindElement(By.Id("Birthdate_Day")).SendKeys(day.ToString());
             driver.FindElement(By.Id("Birthdate_Year")).SendKeys(year.ToString());
-            new WebDriverWait(driver, TimeSpan.FromSeconds(10)).Until(ExpectedConditions.ElementExists((By.Name("#"))));
+            new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME)).Until(ExpectedConditions.ElementExists((By.Name("#"))));
             //Verify
             driver.FindElement(By.Name("#")).Click();
+            Assert.IsFalse(IsMsgOnPage("The information that you provided does not match the information that we have on record"), 
+                "The user's data was not accepted.");
+            Assert.IsFalse(IsMsgOnPage("The member with these credentials has already enrolled. Please use your existing Username and Password to enter the system"),
+                "This user is already enrolled. Maybe another script enrolled this user? Try running this test again.");
         }
 
         internal void part2(String street, String city, String state, int zipcode, String email)
@@ -174,11 +180,11 @@ namespace EnrollmentTester
 
         internal void part3(String answer)
         {
-            new WebDriverWait(driver, TimeSpan.FromSeconds(100)).Until(ExpectedConditions.ElementExists((By.Id("Questions_0__Answer"))));
+            new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME)).Until(ExpectedConditions.ElementExists((By.Id("Questions_0__Answer"))));
             //Last Deposit
             driver.FindElement(By.Id("Questions_0__Answer")).SendKeys("100");
             //Verify
-            new WebDriverWait(driver, TimeSpan.FromSeconds(10)).Until(ExpectedConditions.ElementExists((By.Name("#"))));
+            new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME)).Until(ExpectedConditions.ElementExists((By.Name("#"))));
             driver.FindElement(By.XPath("(//button[@name='#'])[2]")).Click();
             //Verify
             driver.FindElement(By.XPath("//div/div[4]/button")).Click();
@@ -201,6 +207,11 @@ namespace EnrollmentTester
             driver.FindElement(By.Id("Username")).SendKeys(user);
             //Verify
             driver.FindElement(By.Name("#")).Click();
+
+            // Currently causes a long delay. TODO: Figure out how to remove the delay
+            //
+            //Assert.IsFalse(IsMsgOnPage("Login name is already used"),
+            //    "This username is already taken. Try increasing by 1 the user number at the top of the Smoke Test file.");
         }
 
         internal void password(String pass)
@@ -208,7 +219,7 @@ namespace EnrollmentTester
             driver.FindElement(By.Id("Password")).SendKeys(pass);
             driver.FindElement(By.Id("ConfirmPassword")).SendKeys(pass);
             //Verify
-            new WebDriverWait(driver, TimeSpan.FromSeconds(10)).Until(ExpectedConditions.ElementExists((By.XPath("//span[contains(text(),'Password strength indicator:')]/span[contains(text(),'Average')]"))));
+            new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME)).Until(ExpectedConditions.ElementExists((By.XPath("//span[contains(text(),'Password strength indicator:')]/span[contains(text(),'Average')]"))));
             driver.FindElement(By.XPath("//form[contains(@action, 'UpdatePassword')]//button[text()='Verify']")).Click();
         }
 
@@ -242,7 +253,7 @@ namespace EnrollmentTester
         //Account Features Page
         public void runScreen3()
         {
-            new WebDriverWait(driver, TimeSpan.FromSeconds(10)).Until(ExpectedConditions.ElementExists((By.XPath("//div[contains(@data-viewmodel, 'wizard/viewmodels/step')]/div[2]/button"))));
+            new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME)).Until(ExpectedConditions.ElementExists((By.XPath("//div[contains(@data-viewmodel, 'wizard/viewmodels/step')]/div[2]/button"))));
             driver.FindElement(By.XPath("//div[contains(@data-viewmodel, 'wizard/viewmodels/step')]/div[2]/button")).Click();
         }
 
@@ -252,12 +263,43 @@ namespace EnrollmentTester
         public void runScreen4()
         {
             //Confirm and enroll
-            new WebDriverWait(driver, TimeSpan.FromSeconds(10)).Until(ExpectedConditions.ElementExists((By.XPath("//input[contains(@type, 'submit')]"))));
+            new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME)).Until(ExpectedConditions.ElementExists((By.XPath("//input[contains(@type, 'submit')]"))));
             action.SendKeys(Keys.Shift + Keys.Tab).Perform();
             action.SendKeys(Keys.Enter).Perform();
-            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
-            wait.Until(d => d.FindElement(By.Id("UserName")));
+            bool enrollmentWorking = true;
+            try
+            {
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME));
+                wait.Until(d => d.FindElement(By.Id("UserName")));
+            }
+            catch (WebDriverTimeoutException e)
+            {
+                enrollmentWorking = false;
+            }
+            Assert.IsTrue(enrollmentWorking,
+                "Pressing Confirm and Enroll did not make the page proceed which likely means the user was not enrolled");
         }
-    }
 
+
+
+        // Borrowed from repo classes (BasePage.cs)
+        public bool IsMsgOnPage(String text)
+        {
+            try
+            {
+                var message = driver.FindElement(By.XPath("//*[contains(text(),'" + text + "')]"));
+                new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME)).Until(d => message.Displayed);
+                return true;
+            }
+            catch (NoSuchElementException)
+            {
+                return false;
+            }
+            catch (ElementNotVisibleException)
+            {
+                return false;
+            }
+        }
+
+    }
 }
