@@ -18,8 +18,7 @@ namespace EnrollmentTester
     [TestFixture()]
     public class SmokeTest
     {
-        //public static IWebDriver driver = new FirefoxDriver();
-        public static IWebDriver driver = new FirefoxDriver();
+        public static IWebDriver driver = new FirefoxDriver();  // Currently ONLY works stably with Firefox
         public static Actions action = new Actions(driver);
         public static int WAIT_UNTIL_TIME = 20;
 
@@ -35,7 +34,6 @@ namespace EnrollmentTester
             site_login(username, "", pass);
             UnenrollUser(username, true);
         }
-
 
 
 
@@ -93,6 +91,7 @@ namespace EnrollmentTester
             
             //Login Screen
             //Type in the username and proceed
+			Assert.AreEqual("Orpheus QA VIP - Log In", driver.Title, "Page Title is wrong");
             driver.FindElement(By.Id("UserName")).SendKeys(user);
             //action.SendKeys(user).Perform();
             action.SendKeys(Keys.Enter).Perform();
@@ -104,6 +103,7 @@ namespace EnrollmentTester
             if (driver.Title.Contains("question"))
             {
                 //Type in security question answer
+				Assert.AreEqual("Orpheus QA VIP - Security question", driver.Title, "Page Title is wrong");
                 action.SendKeys(answer).Perform();
                 action.SendKeys(Keys.Enter).Perform();
                 wait = new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME));
@@ -112,16 +112,16 @@ namespace EnrollmentTester
 
             //Password Screen
             //Type in the password and proceed
+			Assert.AreEqual("Orpheus QA VIP - Security image", driver.Title, "Page Title is wrong");
             driver.FindElement(By.Id("Password")).SendKeys(pass);
             //action.SendKeys(pass).Perform();
             action.SendKeys(Keys.Enter).Perform();
             wait = new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME));
             wait.Until(d => d.FindElement(By.XPath("//a [contains(@href, '/Users/Account/LogOff?ReturnUrl=%2Fspa%3FcontentUrl%3Daccounts%2Foverview')]")));
+			Assert.AreEqual("Dashboard", driver.Title, "Overview Page Title is wrong");
             driver.FindElement(By.XPath("//a [contains(@href, '/Users/Account/LogOff?ReturnUrl=%2Fspa%3FcontentUrl%3Daccounts%2Foverview')]")).Click();
-            
             //wait.Until(d => d.FindElement(By.Id("UserName")));
             System.Threading.Thread.Sleep(2500);
-
         }
 
         public static void Main() { }
@@ -159,14 +159,14 @@ namespace EnrollmentTester
             //Verify
             driver.FindElement(By.Name("#")).Click();
             Assert.IsFalse(IsMsgOnPage("The information that you provided does not match the information that we have on record"), 
-                "The user's data was not accepted.");
+                "The user's data did not match what is on record.");
             Assert.IsFalse(IsMsgOnPage("The member with these credentials has already enrolled. Please use your existing Username and Password to enter the system"),
-                "This user is already enrolled. Maybe another script enrolled this user? Try running this test again.");
+                "This user is already enrolled.");
         }
 
         internal void part2(String street, String city, String state, int zipcode, String email)
         {
-            driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(10));
+            driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(WAIT_UNTIL_TIME));
             driver.FindElement(By.Id("Street")).SendKeys(street);
             driver.FindElement(By.Id("City")).SendKeys(city);
             driver.FindElement(By.ClassName("k-input")).Click();
@@ -207,12 +207,9 @@ namespace EnrollmentTester
         {
             driver.FindElement(By.Id("Username")).SendKeys(user);
             //Verify
+            Assert.IsFalse(IsMsgOnPage("Login is already used"),
+                "This username is already taken.");
             driver.FindElement(By.Name("#")).Click();
-
-            // Currently causes a long delay. TODO: Figure out how to remove the delay
-            //
-            //Assert.IsFalse(IsMsgOnPage("Login name is already used"),
-            //    "This username is already taken. Try increasing by 1 the user number at the top of the Smoke Test file.");
         }
 
         internal void password(String pass)
@@ -265,8 +262,11 @@ namespace EnrollmentTester
         {
             //Confirm and enroll
             new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME)).Until(ExpectedConditions.ElementExists((By.XPath("//input[contains(@type, 'submit')]"))));
-            action.SendKeys(Keys.Shift + Keys.Tab).Perform();
-            action.SendKeys(Keys.Enter).Perform();
+            //action.SendKeys(Keys.Shift + Keys.Tab).Perform();
+            //action.SendKeys(Keys.Enter).Perform();
+            //action.SendKeys(Keys.Shift).Perform();
+            driver.FindElement(By.XPath("//input [contains(@value, 'Confirm and enroll')]")).Click();
+
             bool enrollmentWorking = true;
             try
             {
@@ -288,16 +288,20 @@ namespace EnrollmentTester
         {
             try
             {
+                driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(0));
                 var message = driver.FindElement(By.XPath("//*[contains(text(),'" + text + "')]"));
                 new WebDriverWait(driver, TimeSpan.FromSeconds(WAIT_UNTIL_TIME)).Until(d => message.Displayed);
+                driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(WAIT_UNTIL_TIME));
                 return true;
             }
             catch (NoSuchElementException)
             {
+                driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(WAIT_UNTIL_TIME));
                 return false;
             }
             catch (ElementNotVisibleException)
             {
+                driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(10));
                 return false;
             }
         }
