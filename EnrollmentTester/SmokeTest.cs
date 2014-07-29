@@ -59,7 +59,8 @@ namespace EnrollmentTester
                 alert.Accept();
             }
             catch { }
-            //Console.WriteLine(driver.FindElement(By.XPath("//*[contains(text(), 'Ac')]/text()[preceding-sibling::br]")).GetAttribute("text"));
+            if (verifyUnenrolled) Assert.IsTrue(driver.FindElement(By.XPath("//div [contains(@id, 'main')]/div")).Text.Contains("Data Saved"),
+                "The user was not unenrolled successfully.");
             System.Threading.Thread.Sleep(1000); //TODO: remove this
         }
 
